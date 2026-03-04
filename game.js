@@ -1,9 +1,7 @@
-const canvas = document.getElementById("canvas");
-const cxt = canvas.getContext("2d");
 const groundY = 440;
 const basePosition = 260;
-const maxBullets = 5;
-const reloadDelay = 1500;
+let maxBullets = 5;
+let reloadDelay = 1500;
 
 let player = {x:260,y:370,w:40,h:70,vy:0,jump:false};
 
@@ -22,20 +20,29 @@ let rocksDodged = 0;
 
 let gravity = 0.6;
 let jumpPower = -12;
-let misplaced = false;
-let collided = false;
+//let misplaced = false;
+//let collided = false;
 let bulletsAmount = maxBullets;
 let reloadStartTime = 0;
 let isReloading = false;
 
-let runningSpriteData, runningSpriteSheet;
+//let runningSpriteData;
+let runningSpriteSheet;
 let runningAnimation = [];
-let gunSpriteData, gunSpriteSheet;
-let gunAnimation = [];
-let idleSpriteData, idleSpriteSheet;
-let idleAnimation = [];
-let hordeSpriteData, hordeSpriteSheet;
-let hordeAnimation = [];
+let frameIndex = 0;
+let frameCounter = 0;
+let frameDelay = 6;
+let frameWidth = 64;
+let frameHeight = 64;
+let totalFrames = 6;
+
+let rockImg, doorImg, doorBrokenImg;
+/*let gunSpriteData, gunSpriteSheet;
+let gunAnimation = [];*/
+/*let idleSpriteData, idleSpriteSheet;
+let idleAnimation = [];*/
+/*let hordeSpriteData, hordeSpriteSheet;
+let hordeAnimation = [];*/
 
 function preload() {
     backgroundImg = loadImage("sky.png");
@@ -61,28 +68,40 @@ function preload() {
 }
 
 function setup() {
-    player.createSprite(player.x, player.y, player.w, player.h);
-    let runningFrames = runningSpriteData.frames;
+    createCanvas(1200, 600)
+
+    //player.createSprite(player.x, player.y, player.w, player.h);
+    /*let runningFrames = runningSpriteData.frames;
     for (let i = 0; i < runningFrames.length; i++) {
         let pos = runningFrames[i].position;
         let img = runningSpriteSheet.get(pos.x, pos.y, pos.w, pos.h);
         runningAnimation.push(img);
-    } 
+    } */
+    for(let i = 0;i < totalFrames; i++){
+        let frame = runningSpriteSheet.get(
+            i*frameWidth,
+            0,
+            frameWidth,
+            frameHeight,
+        );
+        runningFrames.push(frame);
+    }
 }
 
 function draw(){
-    cxt.clearRect(0, 0, canvas.width, canvas.height);
-
-    cxt.fillStyle = "#b38c29";
+    background(0);
+    updateGame();
+    drawGame();
+    /*cxt.fillStyle = "#b38c29";
     cxt.font = "16px Arial";
     if(isReloading){
         cxt.fillText("Recarregando!", canvas.width - 170, 60);
     }
     else {
         cxt.fillText(`Munição: ${bulletsAmount} de ${maxBullets}`, canvas.width - 170, 60);
-    }
+    }*/
 
-    cxt.fillStyle = "blue";
+    /*cxt.fillStyle = "blue";
     cxt.fillRect(player.x, player.y, player.w,player.h);
 
     cxt.fillStyle = "#183b26";
@@ -117,13 +136,173 @@ function draw(){
 
     cxt.fillStyle = "#363636";
     cxt.font = "16px Arial";
-    cxt.fillText(`Pedras Desviadas: ${rocksDodged}`, canvas.width - 170, 90);
+    cxt.fillText(`Pedras Desviadas: ${rocksDodged}`, canvas.width - 170, 90);*/
 
 
 
 }
 
-function update() {
+function updateGame(){
+    player.y += player.vy;
+    if(player.y + player.h < groundY){
+        player.vy += gravity;
+    }
+    else {
+        player.y = groundY - player.h;
+        player.vy = 0;
+        player.jump = false;
+    }
+
+    rock.x -= rockVelocity;
+    if (rock.x < -30){
+        rock.x = width;
+        if(rockVelocity<20){
+            rockVelocity += 0.25;
+            rockCounted = false;
+        }
+    }
+
+    door.x -= doorVelocity;
+    if (door.x < -30){
+        door.x = width;
+        if(doorVelocity < 15){
+            doorVelocity += 0.375;
+            door.broken = false;
+            // Testar colisão da porta depois da velocidade 15
+        }
+    }
+
+    if(isColliding(player,rock)){
+        player.x -= rockVelocity;
+    }
+    if(!door.broken && isColliding(player,door)){
+        player.x -= doorVelocity;
+    }
+
+    for(let i = bullets.length-1;i >= 0; i--){
+        bullets[i].x+=bullets[i].speed;
+        if(!door.broken && isColliding(bullets[i],door)){
+            door.broken = true;
+            bullets.splice(i,1);
+            break;
+        }
+        if(bullets[i].x > width){
+            bullets.splice(i,1);
+        }
+    }
+    if(isReloading && millis()-reloadStartTime>=reloadDelay){
+        bulletsAmount = maxBullets;
+        isReloading = false;
+    }
+
+    if(isColliding(player,horde)){
+        alert("Os zumbis te derrotaram!🧟");
+        resetGame();
+    }
+    score++;
+}
+
+function drawGame(){
+    fill("#183b26");
+    rect(0,groundY,width,height-groundY);
+
+    fill("#00ab3c");
+    rect(horde.x,horde.y,horde.w,horde.h);
+
+    image(rockImg,rock.x,rock.y,rock.w,rock.h);
+    if(!door.broken){
+        image(doorImg,door.x,door.y,door.w,door.h);
+    }
+    else {
+        image(doorBrokenImg,door.x,door.y,door.w,door.h);
+    }
+
+    animatePlayer();
+
+    fill("#46a530");
+    textSize(16);
+    text(`Pontuação: ${score}`, width - 170, 30);
+
+    fill("#363636");
+    text(`Pedras Desviadas: ${rocksDodged}`, width - 170, 90);
+
+    if(isReloading){
+        fill("#b38c29");
+        text(`Recarregando!`, width - 170, 90);
+    }
+    else {
+        fill("#b38c29");
+        text(`Munição: ${bulletsAmount} de ${maxBullets}`, width - 170, 60);
+    }
+}
+
+function animatePlayer(){
+    frameCounter++;
+    if(frameCounter>=frameDelay){
+        frameIndex++;
+        if(frameIndex>=runningFrames.length){
+         frameIndex=0;   
+        }
+        frameCounter=0;
+    }
+    image(
+        runningFrames[frameIndex],
+        player.x,
+        player.y,
+        player.w,
+        player.h,
+    )
+}
+
+function keyPressed() {
+    if(key === " " && !player.jump){
+        player.vy = jumpPower;
+        player.jump = true;
+    }
+}
+
+function mousePressed(){
+    if(isReloading) return;
+    if(bulletsAmount <= 0){
+        isReloading = true;
+        reloadStartTime = millis();
+        return;
+    }
+    bullets.push({
+        x: player.x + player.w,
+        y: player.y + player.h / 2,
+        w: 10,
+        h: 5,
+        speed: 8,
+    });
+    bulletsAmount--;
+    if(bulletsAmount == 0){
+        isReloading = true;
+        reloadStartTime = millis();
+    }
+}
+
+function isColliding(a,b){
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+    );
+}
+
+function resetGame(){
+    player.x = basePosition;
+    rockVelocity = 4;
+    doorVelocity = 3;
+    door.broken = false;
+    rock.x = width;
+    door.x = width;
+    score = 0;
+    rocksDodged = 0;
+}
+
+/*function update() {
     collided = false;
 
     player.y += player.vy;
@@ -241,16 +420,14 @@ function update() {
     requestAnimationFrame(update);
 }
 
-function isColliding(a,b){
-    return (
-        a.x < b.x + b.w &&
-        a.x + a.w > b.x &&
-        a.y < b.y + b.h &&
-        a.y + a.h > b.y
-    );
+
+function mousePressed() {
+    shoot();
 }
 
-document.addEventListener("keydown", (tecla) => {
+
+
+/*document.addEventListener("keydown", (tecla) => {
     if(tecla.code === "Space" && !player.jump){
         player.vy = jumpPower;
         player.jump = true;
@@ -287,6 +464,6 @@ document.addEventListener("click", function(){
     }
 
     console.log("Disparo efetuado. - Munição: ", bulletsAmount);
-})
+})*/
 
-update()
+//update()
