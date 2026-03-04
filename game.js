@@ -7,10 +7,10 @@ let player = {x:260,y:370,w:40,h:70,vy:0,jump:false};
 
 let horde = {x: 0, y: 140, w: 120, h: 300};
 
-let rock = {x: canvas.width,y:405,w:50,h:35,counted: true};
+let rock = {x: 0,y:405,w:50,h:35,counted: true};
 let rockVelocity = 4;
 
-let door = {x: canvas.width, y: 300, w: 65, h:140,broken:false};
+let door = {x: 0, y: 300, w: 65, h:140,broken:false};
 let doorVelocity = 3;
 
 let bullets = [];
@@ -28,7 +28,7 @@ let isReloading = false;
 
 //let runningSpriteData;
 let runningSpriteSheet;
-let runningAnimation = [];
+let runningFrames = [];
 let frameIndex = 0;
 let frameCounter = 0;
 let frameDelay = 6;
@@ -86,10 +86,12 @@ function setup() {
         );
         runningFrames.push(frame);
     }
+    rock.x = width;
+    door.x = width;
 }
 
 function draw(){
-    background(0);
+    background(backgroundImg);
     updateGame();
     drawGame();
     /*cxt.fillStyle = "#b38c29";
@@ -206,8 +208,6 @@ function drawGame(){
     fill("#183b26");
     rect(0,groundY,width,height-groundY);
 
-    fill("#00ab3c");
-    rect(horde.x,horde.y,horde.w,horde.h);
 
     image(rockImg,rock.x,rock.y,rock.w,rock.h);
     if(!door.broken){
