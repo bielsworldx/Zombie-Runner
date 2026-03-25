@@ -3,7 +3,7 @@ const basePosition = 260;
 let maxBullets = 5;
 let reloadDelay = 1500;
 
-let player = {x:260,y:370,w:40,h:70,vy:0,jump:false};
+let player;
 
 let horde = {x: 0, y: 140, w: 120, h: 300};
 
@@ -54,7 +54,11 @@ function preload() {
     floorImg1 = loadImage("floor1.png");
     floorImg2 = loadImage("floor2.png");
 
-    runningSpriteData = loadJSON("running.json");
+    playerRunning = loadAnimation("./running/running0.png","./running/running1.png","./running/running2.png","./running/running3.png","./running/running4.png","./running/running5.png");
+    playerGun = loadAnimation("./gun/gun0.png","./gun/gun1.png","./gun/gun2.png","./gun/gun3.png","./gun/gun4.png","./gun/gun5.png",);
+    hordeAnim = loadAnimation("./horde/horde0.png","./horde/horde1.png");
+
+    /*runningSpriteData = loadJSON("running.json");
     runningSpriteSheet = loadImage("running.png");
 
     idleSpriteData = loadJSON("idle.json");
@@ -64,20 +68,21 @@ function preload() {
     gunSpriteSheet = loadImage("gun.png");
 
     hordeSpriteData = loadJSON("horde.json");
-    hordeSpriteSheet = loadImage("horde.png");
+    hordeSpriteSheet = loadImage("horde.png");*/
 }
 
 function setup() {
     createCanvas(1200, 600)
 
-    //player.createSprite(player.x, player.y, player.w, player.h);
+    player = createSprite(260,370,40,70);
+    player.addAnimation("running",playerRunning);
     /*let runningFrames = runningSpriteData.frames;
     for (let i = 0; i < runningFrames.length; i++) {
         let pos = runningFrames[i].position;
         let img = runningSpriteSheet.get(pos.x, pos.y, pos.w, pos.h);
         runningAnimation.push(img);
     } */
-    for(let i = 0;i < totalFrames; i++){
+    /*for(let i = 0;i < totalFrames; i++){
         let frame = runningSpriteSheet.get(
             i*frameWidth,
             0,
@@ -85,7 +90,7 @@ function setup() {
             frameHeight,
         );
         runningFrames.push(frame);
-    }
+    }*/
     rock.x = width;
     door.x = width;
 }
