@@ -5,12 +5,12 @@ let reloadDelay = 1500;
 
 let player;
 
-let horde = {x: 0, y: 140, w: 120, h: 300};
+let horde;
 
-let rock = {x: 0,y:405,w:50,h:35,counted: true};
+let rock;
 let rockVelocity = 4;
 
-let door = {x: 0, y: 300, w: 65, h:140,broken:false};
+let door;
 let doorVelocity = 3;
 
 let bullets = [];
@@ -26,23 +26,12 @@ let bulletsAmount = maxBullets;
 let reloadStartTime = 0;
 let isReloading = false;
 
-//let runningSpriteData;
-let runningSpriteSheet;
-let runningFrames = [];
-let frameIndex = 0;
-let frameCounter = 0;
-let frameDelay = 6;
-let frameWidth = 64;
-let frameHeight = 64;
-let totalFrames = 6;
+let backgroundImg;
+let playerRunning;
+let playerGun;
+let hordeAnim;
 
 let rockImg, doorImg, doorBrokenImg;
-/*let gunSpriteData, gunSpriteSheet;
-let gunAnimation = [];*/
-/*let idleSpriteData, idleSpriteSheet;
-let idleAnimation = [];*/
-/*let hordeSpriteData, hordeSpriteSheet;
-let hordeAnimation = [];*/
 
 function preload() {
     backgroundImg = loadImage("sky.png");
@@ -58,23 +47,12 @@ function preload() {
     playerGun = loadAnimation("./gun/gun0.png","./gun/gun1.png","./gun/gun2.png","./gun/gun3.png","./gun/gun4.png","./gun/gun5.png",);
     hordeAnim = loadAnimation("./horde/horde0.png","./horde/horde1.png");
 
-    /*runningSpriteData = loadJSON("running.json");
-    runningSpriteSheet = loadImage("running.png");
-
-    idleSpriteData = loadJSON("idle.json");
-    idleSpriteSheet = loadImage("idle.png");
-
-    gunSpriteData = loadJSON("gun.json");
-    gunSpriteSheet = loadImage("gun.png");
-
-    hordeSpriteData = loadJSON("horde.json");
-    hordeSpriteSheet = loadImage("horde.png");*/
 }
 
 function setup() {
     createCanvas(1200, 600)
 
-    player = createSprite(260,370,40,70);
+    player = createSprite(basePosition,370,40,70);
     player.addAnimation("running",playerRunning);
     /*let runningFrames = runningSpriteData.frames;
     for (let i = 0; i < runningFrames.length; i++) {
@@ -222,7 +200,6 @@ function drawGame(){
         image(doorBrokenImg,door.x,door.y,door.w,door.h);
     }
 
-    animatePlayer();
 
     fill("#46a530");
     textSize(16);
@@ -239,25 +216,10 @@ function drawGame(){
         fill("#b38c29");
         text(`Munição: ${bulletsAmount} de ${maxBullets}`, width - 170, 60);
     }
+
+    drawSprites();
 }
 
-function animatePlayer(){
-    frameCounter++;
-    if(frameCounter>=frameDelay){
-        frameIndex++;
-        if(frameIndex>=runningFrames.length){
-         frameIndex=0;   
-        }
-        frameCounter=0;
-    }
-    image(
-        runningFrames[frameIndex],
-        player.x,
-        player.y,
-        player.w,
-        player.h,
-    )
-}
 
 function keyPressed() {
     if(key === " " && !player.jump){
