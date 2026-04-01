@@ -43,8 +43,23 @@ function preload() {
     floorImg1 = loadImage("floor1.png");
     floorImg2 = loadImage("floor2.png");
 
-    playerRunning = loadAnimation("./running/running0.png","./running/running1.png","./running/running2.png","./running/running3.png","./running/running4.png","./running/running5.png");
-    playerGun = loadAnimation("./gun/gun0.png","./gun/gun1.png","./gun/gun2.png","./gun/gun3.png","./gun/gun4.png","./gun/gun5.png",);
+    playerRunning = loadAnimation(
+        "./running/running0.png",
+        "./running/running1.png",
+        "./running/running2.png",
+        "./running/running3.png",
+        "./running/running4.png",
+        "./running/running5.png"
+    );
+
+    playerGun = loadAnimation(
+        "./gun/gun0.png",
+        "./gun/gun1.png",
+        "./gun/gun2.png",
+        "./gun/gun3.png",
+        "./gun/gun4.png",
+        "./gun/gun5.png"
+    );
     hordeAnim = loadAnimation("./horde/horde0.png","./horde/horde1.png");
 
 }
@@ -54,6 +69,23 @@ function setup() {
 
     player = createSprite(basePosition,370,40,70);
     player.addAnimation("running",playerRunning);
+    player.addAnimation("shooting",playerGun);
+    player.changeAnimation("running");
+    player.velocity.y = 0;
+    player.jump = false;
+
+    horde = createSprite(60,290,120,300);
+    horde.addAnimation("horde",hordeAnim);
+
+    rock= createSprite(width, 420, 50, 35);
+    rock.addImage(rockImg);
+
+    door = createSprite(width, 330, 65, 140);
+    door.addImage("closed",doorImg);
+    door.addImage("broken",doorBrokenImg);
+    door.broken = false;
+
+    bullets = new Group()
     /*let runningFrames = runningSpriteData.frames;
     for (let i = 0; i < runningFrames.length; i++) {
         let pos = runningFrames[i].position;
@@ -69,8 +101,6 @@ function setup() {
         );
         runningFrames.push(frame);
     }*/
-    rock.x = width;
-    door.x = width;
 }
 
 function draw(){
@@ -128,7 +158,13 @@ function draw(){
 }
 
 function updateGame(){
-    player.y += player.vy;
+    player.velocity.y += gravity;
+    if (player.position.y + player.height/2 >= groundY){
+        player.position.y = groundY - player.height / 2;
+        player.velocity.y = 0;
+        player.jump = false;
+    }
+    /*player.y += player.vy;
     if(player.y + player.h < groundY){
         player.vy += gravity;
     }
@@ -136,43 +172,56 @@ function updateGame(){
         player.y = groundY - player.h;
         player.vy = 0;
         player.jump = false;
-    }
+    }*/
 
-    rock.x -= rockVelocity;
-    if (rock.x < -30){
-        rock.x = width;
+
+    rock.position.x -= rockVelocity;
+    if (rock.position.x < -30){
+        rock.position.x = width;
         if(rockVelocity<20){
             rockVelocity += 0.25;
-            rockCounted = false;
+            //rockCounted = false;
         }
     }
 
-    door.x -= doorVelocity;
-    if (door.x < -30){
-        door.x = width;
+    door.position.x -= doorVelocity;
+    if (door.position.x < -30){
+        door.position.x = width;
         if(doorVelocity < 15){
             doorVelocity += 0.375;
             door.broken = false;
+            door.changeImage("closed");
             // Testar colisão da porta depois da velocidade 15
         }
     }
 
-    if(isColliding(player,rock)){
+    if(player.overlap(rock)){
+        player.position.x -= rockVelocity;
+    }
+    if(!door.broken && player.overlap(door)){
+        player.position.x -= rockVelocity;
+    }
+
+    /*if(isColliding(player,rock)){
         player.x -= rockVelocity;
     }
     if(!door.broken && isColliding(player,door)){
         player.x -= doorVelocity;
-    }
+    }*/
 
     for(let i = bullets.length-1;i >= 0; i--){
-        bullets[i].x+=bullets[i].speed;
-        if(!door.broken && isColliding(bullets[i],door)){
+        let b = bullets[i];
+        b.position.x+=b.speed;
+        if(!door.broken && b.overlap(door)){
             door.broken = true;
-            bullets.splice(i,1);
-            break;
+            door.changeImage("broken");
+            b.remove();
+            //bullets.splice(i,1);
+            //break;
         }
-        if(bullets[i].x > width){
-            bullets.splice(i,1);
+        if(b.position.x > width){
+            b.remove();
+            //bullets.splice(i,1);
         }
     }
     if(isReloading && millis()-reloadStartTime>=reloadDelay){
@@ -180,7 +229,7 @@ function updateGame(){
         isReloading = false;
     }
 
-    if(isColliding(player,horde)){
+    if(player.overlap(horde)){
         alert("Os zumbis te derrotaram!🧟");
         resetGame();
     }
@@ -192,13 +241,13 @@ function drawGame(){
     rect(0,groundY,width,height-groundY);
 
 
-    image(rockImg,rock.x,rock.y,rock.w,rock.h);
+    /*image(rockImg,rock.x,rock.y,rock.w,rock.h);
     if(!door.broken){
         image(doorImg,door.x,door.y,door.w,door.h);
     }
     else {
         image(doorBrokenImg,door.x,door.y,door.w,door.h);
-    }
+    }*/
 
 
     fill("#46a530");
@@ -223,50 +272,78 @@ function drawGame(){
 
 function keyPressed() {
     if(key === " " && !player.jump){
-        player.vy = jumpPower;
+        player.velocity.y = jumpPower;
         player.jump = true;
     }
 }
 
 function mousePressed(){
     if(isReloading) return;
+    
     if(bulletsAmount <= 0){
         isReloading = true;
         reloadStartTime = millis();
         return;
     }
-    bullets.push({
+
+    let bullet = createSprite(
+        player.position.x + player.width/2,
+        player.position.y,
+        10,
+        5
+    );
+
+    bullet.shapeColor = "#b38c29";
+    bullet.speed = 8;
+    bullets.add(bullet);
+
+    /*bullets.push({
         x: player.x + player.w,
         y: player.y + player.h / 2,
         w: 10,
         h: 5,
         speed: 8,
-    });
+    });*/
+
     bulletsAmount--;
+
+    player.changeAnimation("shooting");
+
+    setTimeout(() => {
+        player.changeAnimation("running");
+    },200);
+
     if(bulletsAmount == 0){
         isReloading = true;
         reloadStartTime = millis();
     }
 }
 
-function isColliding(a,b){
+/*function isColliding(a,b){
     return (
         a.x < b.x + b.w &&
         a.x + a.w > b.x &&
         a.y < b.y + b.h &&
         a.y + a.h > b.y
     );
-}
+}*/
 
 function resetGame(){
-    player.x = basePosition;
+    player.position.x = basePosition;
+
     rockVelocity = 4;
     doorVelocity = 3;
+
     door.broken = false;
-    rock.x = width;
-    door.x = width;
+    door.changeImage("closed");
+
+    rock.position.x = width;
+    door.position.x = width;
+
     score = 0;
     rocksDodged = 0;
+
+    bullets.removeSprites();
 }
 
 /*function update() {
