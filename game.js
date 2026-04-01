@@ -13,7 +13,7 @@ let rockVelocity = 4;
 let door;
 let doorVelocity = 3;
 
-let bullets = [];
+let bullets;
 
 let score = 0;
 let rocksDodged = 0;
@@ -74,86 +74,28 @@ function setup() {
     player.velocity.y = 0;
     player.jump = false;
 
-    horde = createSprite(60,290,120,300);
+    horde = createSprite(60,305,120,300);
     horde.addAnimation("horde",hordeAnim);
 
     rock= createSprite(width, 420, 50, 35);
     rock.addImage(rockImg);
 
-    door = createSprite(width, 330, 65, 140);
+    door = createSprite(width, 394, 65, 140);
     door.addImage("closed",doorImg);
     door.addImage("broken",doorBrokenImg);
     door.broken = false;
 
     bullets = new Group()
-    /*let runningFrames = runningSpriteData.frames;
-    for (let i = 0; i < runningFrames.length; i++) {
-        let pos = runningFrames[i].position;
-        let img = runningSpriteSheet.get(pos.x, pos.y, pos.w, pos.h);
-        runningAnimation.push(img);
-    } */
-    /*for(let i = 0;i < totalFrames; i++){
-        let frame = runningSpriteSheet.get(
-            i*frameWidth,
-            0,
-            frameWidth,
-            frameHeight,
-        );
-        runningFrames.push(frame);
-    }*/
+
+    player.setCollider("rectangle",-15,0,30,85);
+    player.debug = true;
+
 }
 
 function draw(){
     background(backgroundImg);
     updateGame();
     drawGame();
-    /*cxt.fillStyle = "#b38c29";
-    cxt.font = "16px Arial";
-    if(isReloading){
-        cxt.fillText("Recarregando!", canvas.width - 170, 60);
-    }
-    else {
-        cxt.fillText(`Munição: ${bulletsAmount} de ${maxBullets}`, canvas.width - 170, 60);
-    }*/
-
-    /*cxt.fillStyle = "blue";
-    cxt.fillRect(player.x, player.y, player.w,player.h);
-
-    cxt.fillStyle = "#183b26";
-    cxt.fillRect(0, 440, canvas.width, 160);
-
-    cxt.fillStyle = "#363636";
-    cxt.fillRect(rock.x,rock.y,rock.w,rock.h);
-
-    if(!door.broken){
-        cxt.fillStyle = "#a76f3b";
-        cxt.fillRect(door.x, door.y, door.w, door.h);
-    }
-    else {
-        cxt.save();
-        cxt.globalAlpha = 0.3;
-        cxt.fillStyle = "#a76f3b"
-        cxt.fillRect(door.x, door.y, door.w, door.h);
-        cxt.restore();
-    }
-
-    cxt.fillStyle = "#00ab3c";
-    cxt.fillRect(0, 140, 120, 300);
-
-    cxt.fillStyle = "#b38c29";
-    for(let bullet of bullets){
-        cxt.fillRect(bullet.x, bullet.y, bullet.w, bullet.h)
-    };
-
-    cxt.fillStyle = "#46a530";
-    cxt.font = "16px Arial";
-    cxt.fillText(`Pontuação: ${score}`, canvas.width - 170, 30);
-
-    cxt.fillStyle = "#363636";
-    cxt.font = "16px Arial";
-    cxt.fillText(`Pedras Desviadas: ${rocksDodged}`, canvas.width - 170, 90);*/
-
-
 
 }
 
@@ -164,15 +106,6 @@ function updateGame(){
         player.velocity.y = 0;
         player.jump = false;
     }
-    /*player.y += player.vy;
-    if(player.y + player.h < groundY){
-        player.vy += gravity;
-    }
-    else {
-        player.y = groundY - player.h;
-        player.vy = 0;
-        player.jump = false;
-    }*/
 
 
     rock.position.x -= rockVelocity;
@@ -199,15 +132,8 @@ function updateGame(){
         player.position.x -= rockVelocity;
     }
     if(!door.broken && player.overlap(door)){
-        player.position.x -= rockVelocity;
+        player.position.x -= doorVelocity;
     }
-
-    /*if(isColliding(player,rock)){
-        player.x -= rockVelocity;
-    }
-    if(!door.broken && isColliding(player,door)){
-        player.x -= doorVelocity;
-    }*/
 
     for(let i = bullets.length-1;i >= 0; i--){
         let b = bullets[i];
@@ -216,12 +142,9 @@ function updateGame(){
             door.broken = true;
             door.changeImage("broken");
             b.remove();
-            //bullets.splice(i,1);
-            //break;
         }
         if(b.position.x > width){
             b.remove();
-            //bullets.splice(i,1);
         }
     }
     if(isReloading && millis()-reloadStartTime>=reloadDelay){
@@ -239,16 +162,6 @@ function updateGame(){
 function drawGame(){
     fill("#183b26");
     rect(0,groundY,width,height-groundY);
-
-
-    /*image(rockImg,rock.x,rock.y,rock.w,rock.h);
-    if(!door.broken){
-        image(doorImg,door.x,door.y,door.w,door.h);
-    }
-    else {
-        image(doorBrokenImg,door.x,door.y,door.w,door.h);
-    }*/
-
 
     fill("#46a530");
     textSize(16);
@@ -297,21 +210,13 @@ function mousePressed(){
     bullet.speed = 8;
     bullets.add(bullet);
 
-    /*bullets.push({
-        x: player.x + player.w,
-        y: player.y + player.h / 2,
-        w: 10,
-        h: 5,
-        speed: 8,
-    });*/
-
     bulletsAmount--;
 
     player.changeAnimation("shooting");
 
     setTimeout(() => {
         player.changeAnimation("running");
-    },200);
+    },400);
 
     if(bulletsAmount == 0){
         isReloading = true;
@@ -319,14 +224,6 @@ function mousePressed(){
     }
 }
 
-/*function isColliding(a,b){
-    return (
-        a.x < b.x + b.w &&
-        a.x + a.w > b.x &&
-        a.y < b.y + b.h &&
-        a.y + a.h > b.y
-    );
-}*/
 
 function resetGame(){
     player.position.x = basePosition;
@@ -349,48 +246,14 @@ function resetGame(){
 /*function update() {
     collided = false;
 
-    player.y += player.vy;
-    if (player.y + player.h < groundY){
-        player.vy += gravity;
-    }
-    else {
-        player.y = groundY - player.h;
-        player.vy = 0;
-        player.jump=false;
-    }
-
-    rock.x -= rockVelocity;
-    if(rock.x < -30 ){
-        rock.x = 820;
-        if(rockVelocity<20){
-            rockVelocity += 0.25;
-            rock.counted = false;
-            console.log("Velocidade da pedra: ", rockVelocity);
-        }
-    }
     if (rock.x + rock.w < player.x && !rock.counted){
         rocksDodged++;
         rock.counted = true;
         console.log("Pedras contadas: ", rocksDodged);
     }
 
-    //doorVelocity = -(Math.floor(Math.random()*4))
-    door.x -= doorVelocity;
-    if(door.x < -30 ){
-        door.x = 820;
-        if(doorVelocity<15){
-            doorVelocity += 0.375;
-            door.broken = false;
-            console.log("Velocidade da porta: ", doorVelocity);
-        }
-    }
 
-    if(
-        player.x < rock.x + rock.w &&
-        player.x + player.w > rock.x &&
-        player.y < rock.y + rock.h &&
-        player.y + player.h > rock.y
-    ){
+    if(){
         if(player.y != rock.y)player.x -= 5;
         collided = true;
         player.x -= rockVelocity;
@@ -411,35 +274,6 @@ function resetGame(){
         console.log(misplaced);
     }
 
-    for(let i = bullets.length-1;i>=0;i--){
-        bullets[i].x+=bullets[i].speed;
-
-        if(!door.broken && isColliding(bullets[i],door)){
-            door.broken = true;
-            bullets.splice(i,1);
-            //console.log("Porta destruída!");
-            break;
-        } 
-
-        if(bullets[i].x > canvas.width){
-            bullets.splice(i,1);
-        }
-    }
-
-    if(
-        player.x < horde.x + horde.w &&
-        player.x + player.w > horde.x
-    ) {
-        alert("Os zumbis te derrotaram!🧟");
-        player.x = 260
-        rockVelocity = 4;
-        doorVelocity = 3;
-        door.broken = false;
-        rock.x = canvas.width;
-        door.x = canvas.width;
-        score = 0;
-        rocksDodged = 0;
-    }
 
     if(!door.broken && isColliding(player,door)){
         player.x -= doorVelocity;
@@ -462,13 +296,7 @@ function resetGame(){
 
     draw();
     requestAnimationFrame(update);
-}
-
-
-function mousePressed() {
-    shoot();
-}
-
+}*/
 
 
 /*document.addEventListener("keydown", (tecla) => {
@@ -508,6 +336,6 @@ document.addEventListener("click", function(){
     }
 
     console.log("Disparo efetuado. - Munição: ", bulletsAmount);
-})*/
+})
 
-//update()
+//update()*/
